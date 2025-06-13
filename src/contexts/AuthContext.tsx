@@ -6,7 +6,7 @@ import { loginUser, signupUser, logout, loadUser } from '../store/slices/authSli
 interface User {
   name: string;
   email: string;
-  role: 'employee' | 'admin';
+  role: 'employee' | 'admin' | 'college';
 }
 
 interface AuthContextType {

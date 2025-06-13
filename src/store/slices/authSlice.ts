@@ -5,7 +5,7 @@ interface User {
   id: string;
   name: string;
   email: string;
-  role: 'employee' | 'admin';
+  role: 'employee' | 'admin' | 'college';
   profileImage?: string;
 }
 
@@ -25,22 +25,44 @@ const initialState: AuthState = {
   isAuthenticated: false,
 };
 
-// Async thunks for API calls
+// Mock user database
+const mockUsers: User[] = [];
+
+// Mock authentication functions
+const generateToken = () => {
+  return 'mock-jwt-token-' + Math.random().toString(36).substr(2, 9);
+};
+
+const generateUserId = () => {
+  return 'user-' + Math.random().toString(36).substr(2, 9);
+};
+
+// Async thunks for mock API calls
 export const loginUser = createAsyncThunk(
   'auth/login',
   async ({ email, password }: { email: string; password: string }) => {
-    // Simulate API call
-    const response = await fetch('/api/auth/login', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, password }),
-    });
+    // Simulate API delay
+    await new Promise(resolve => setTimeout(resolve, 1000));
     
-    if (!response.ok) {
-      throw new Error('Login failed');
+    // Check if user exists in mock database
+    const existingUser = mockUsers.find(user => user.email === email);
+    
+    if (!existingUser) {
+      throw new Error('User not found');
     }
     
-    const data = await response.json();
+    // In a real app, you would verify the password here
+    // For mock purposes, we'll just check if password is not empty
+    if (!password) {
+      throw new Error('Invalid password');
+    }
+    
+    const token = generateToken();
+    const data = {
+      user: existingUser,
+      token,
+    };
+    
     localStorage.setItem('token', data.token);
     localStorage.setItem('user', JSON.stringify(data.user));
     return data;
@@ -49,18 +71,32 @@ export const loginUser = createAsyncThunk(
 
 export const signupUser = createAsyncThunk(
   'auth/signup',
-  async ({ name, email, password, role }: { name: string; email: string; password: string; role: 'employee' | 'admin' }) => {
-    const response = await fetch('/api/auth/signup', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name, email, password, role }),
-    });
+  async ({ name, email, password, role }: { name: string; email: string; password: string; role: 'employee' | 'admin' | 'college' }) => {
+    // Simulate API delay
+    await new Promise(resolve => setTimeout(resolve, 1000));
     
-    if (!response.ok) {
-      throw new Error('Signup failed');
+    // Check if user already exists
+    const existingUser = mockUsers.find(user => user.email === email);
+    
+    if (existingUser) {
+      throw new Error('Email already exists');
     }
     
-    return await response.json();
+    // Create new user
+    const newUser: User = {
+      id: generateUserId(),
+      name,
+      email,
+      role,
+    };
+    
+    // Add to mock database
+    mockUsers.push(newUser);
+    
+    console.log('User created successfully:', newUser);
+    console.log('Current mock users:', mockUsers);
+    
+    return { message: 'User created successfully' };
   }
 );
 
