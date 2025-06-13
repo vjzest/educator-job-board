@@ -3,7 +3,6 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { useEffect } from 'react';
 import EmployeeProfile from '@/components/profiles/EmployeeProfile';
-import CollegeProfile from '@/components/profiles/CollegeProfile';
 import AdminProfile from '@/components/profiles/AdminProfile';
 import Header from '@/components/Header';
 
@@ -26,8 +25,6 @@ const Profile = () => {
     switch (user.role) {
       case 'employee':
         return <EmployeeProfile />;
-      case 'college':
-        return <CollegeProfile />;
       case 'admin':
         return <AdminProfile />;
       default:

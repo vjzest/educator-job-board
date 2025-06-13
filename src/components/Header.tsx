@@ -49,8 +49,6 @@ const Header = () => {
     switch (user.role) {
       case 'employee':
         return '/dashboard/employee';
-      case 'college':
-        return '/dashboard/college';
       case 'admin':
         return '/dashboard/admin';
       default:
@@ -76,17 +74,6 @@ const Header = () => {
           { label: "Browse Jobs", path: "/dashboard/employee/browse-jobs", icon: Search },
           { label: "My Applications", path: "/dashboard/employee/applications", icon: FileText },
           { label: "Settings", path: "/dashboard/employee/settings", icon: SettingsIcon },
-          ...commonItems,
-        ];
-      case 'college':
-        return [
-          { label: "College Profile", path: "/dashboard/college/profile", icon: Building },
-          { label: "Post New Job", path: "/dashboard/college/post-job", icon: PlusCircle },
-          { label: "Manage Job Posts", path: "/dashboard/college/posts", icon: FileText },
-          { label: "View Applications", path: "/dashboard/college/applications", icon: Users },
-          { label: "Shortlist Candidates", path: "/dashboard/college/shortlist", icon: UserCheck },
-          { label: "Offer Letters", path: "/dashboard/college/offer-letter", icon: Award },
-          { label: "Settings", path: "/dashboard/college/settings", icon: SettingsIcon },
           ...commonItems,
         ];
       case 'admin':
