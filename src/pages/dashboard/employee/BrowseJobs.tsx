@@ -8,7 +8,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { MapPin, Clock, GraduationCap, Search, Filter, Briefcase } from 'lucide-react';
 import { useAppDispatch, useAppSelector } from '@/hooks/useRedux';
 import { fetchJobs, setSearchQuery, applyToJob } from '@/store/slices/jobSlice';
-import { useToast } from '@/components/ui/use-toast';
+import { useToast } from '@/hooks/use-toast';
 
 const BrowseJobs = () => {
   const dispatch = useAppDispatch();
@@ -145,7 +145,7 @@ const BrowseJobs = () => {
                       {job.school}
                     </CardDescription>
                   </div>
-                  <Badge variant={job.type ===  ? 'default' : 'secondary'}>
+                  <Badge variant={job.type === 'Full-time' ? 'default' : 'secondary'}>
                     {job.type}
                   </Badge>
                 </div>
