@@ -1,10 +1,12 @@
 
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useEffect } from 'react';
+import { useAppDispatch, useAppSelector } from '../hooks/useRedux';
+import { loginUser, signupUser, logout, loadUser } from '../store/slices/authSlice';
 
 interface User {
   name: string;
   email: string;
-  role: 'employee' | 'college' | 'admin';
+  role: 'employee' | 'admin';
 }
 
 interface AuthContextType {
@@ -12,6 +14,7 @@ interface AuthContextType {
   login: (email: string, password: string) => Promise<boolean>;
   signup: (name: string, email: string, password: string, role: User['role']) => Promise<boolean>;
   logout: () => void;
+  isLoading: boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -25,33 +28,17 @@ export const useAuth = () => {
 };
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [user, setUser] = useState<User | null>(null);
+  const dispatch = useAppDispatch();
+  const { user, isLoading } = useAppSelector(state => state.auth);
 
   useEffect(() => {
-    // Check if user is already logged in
-    const storedUser = localStorage.getItem('currentUser');
-    if (storedUser) {
-      setUser(JSON.parse(storedUser));
-    }
-  }, []);
+    // Try to load user from localStorage on app start
+    dispatch(loadUser());
+  }, [dispatch]);
 
   const signup = async (name: string, email: string, password: string, role: User['role']): Promise<boolean> => {
     try {
-      // Get existing users or initialize empty array
-      const existingUsers = JSON.parse(localStorage.getItem('users') || '[]');
-      
-      // Check if user already exists
-      if (existingUsers.find((u: any) => u.email === email)) {
-        return false;
-      }
-
-      // Create new user (but don't log them in automatically)
-      const newUser = { name, email, password, role };
-      existingUsers.push(newUser);
-      
-      // Save to localStorage
-      localStorage.setItem('users', JSON.stringify(existingUsers));
-      
+      await dispatch(signupUser({ name, email, password, role })).unwrap();
       return true;
     } catch (error) {
       console.error('Signup error:', error);
@@ -61,30 +48,26 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const login = async (email: string, password: string): Promise<boolean> => {
     try {
-      const existingUsers = JSON.parse(localStorage.getItem('users') || '[]');
-      const user = existingUsers.find((u: any) => u.email === email && u.password === password);
-      
-      if (user) {
-        const userToSet = { name: user.name, email: user.email, role: user.role };
-        setUser(userToSet);
-        localStorage.setItem('currentUser', JSON.stringify(userToSet));
-        return true;
-      }
-      
-      return false;
+      await dispatch(loginUser({ email, password })).unwrap();
+      return true;
     } catch (error) {
       console.error('Login error:', error);
       return false;
     }
   };
 
-  const logout = () => {
-    setUser(null);
-    localStorage.removeItem('currentUser');
+  const handleLogout = () => {
+    dispatch(logout());
   };
 
   return (
-    <AuthContext.Provider value={{ user, login, signup, logout }}>
+    <AuthContext.Provider value={{ 
+      user, 
+      login, 
+      signup, 
+      logout: handleLogout, 
+      isLoading 
+    }}>
       {children}
     </AuthContext.Provider>
   );

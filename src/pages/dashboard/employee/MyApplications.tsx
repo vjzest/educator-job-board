@@ -1,7 +1,9 @@
 
+import { useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Skeleton } from '@/components/ui/skeleton';
 import { 
   Eye, 
   Calendar, 
@@ -15,93 +17,18 @@ import {
   Download,
   MessageSquare
 } from 'lucide-react';
+import { useAppDispatch, useAppSelector } from '@/hooks/useRedux';
+import { fetchApplications, withdrawApplication } from '@/store/slices/applicationSlice';
+import { useToast } from '@/components/ui/use-toast';
 
 const MyApplications = () => {
-  const applications = [
-    {
-      id: 1,
-      jobTitle: 'Mathematics Teacher',
-      school: 'Springfield Elementary School',
-      location: 'Springfield, IL',
-      appliedDate: '2024-01-15',
-      status: 'Interview Scheduled',
-      statusColor: 'bg-blue-100 text-blue-800',
-      interviewDate: '2024-01-25',
-      interviewTime: '10:00 AM',
-      salary: '$45,000 - $55,000',
-      jobType: 'Full-time',
-      applicationProgress: 75,
-      nextStep: 'Prepare for interview',
-      contactPerson: 'Dr. Sarah Johnson',
-      contactEmail: 'sarah.johnson@springfield.edu',
-      notes: 'Panel interview with 3 department heads. Bring teaching portfolio and sample lesson plans.'
-    },
-    {
-      id: 2,
-      jobTitle: 'Science Teacher',
-      school: 'Oak Hill High School',
-      location: 'Madison, WI',
-      appliedDate: '2024-01-10',
-      status: 'Under Review',
-      statusColor: 'bg-yellow-100 text-yellow-800',
-      salary: '$50,000 - $65,000',
-      jobType: 'Full-time',
-      applicationProgress: 50,
-      nextStep: 'Waiting for employer response',
-      contactPerson: 'Mr. David Wilson',
-      contactEmail: 'david.wilson@oakhill.edu',
-      notes: 'Application submitted with all required documents. Expected response within 2 weeks.'
-    },
-    {
-      id: 3,
-      jobTitle: 'English Teacher',
-      school: 'Central Middle School',
-      location: 'Chicago, IL',
-      appliedDate: '2024-01-05',
-      status: 'Rejected',
-      statusColor: 'bg-red-100 text-red-800',
-      salary: '$35,000 - $45,000',
-      jobType: 'Part-time',
-      applicationProgress: 25,
-      nextStep: 'Apply to similar positions',
-      rejectionReason: 'Position filled by internal candidate',
-      notes: 'Feedback: Strong application, consider applying for full-time positions when available.'
-    },
-    {
-      id: 4,
-      jobTitle: 'Art Teacher',
-      school: 'Riverside Academy',
-      location: 'Milwaukee, WI',
-      appliedDate: '2024-01-20',
-      status: 'Offer Extended',
-      statusColor: 'bg-green-100 text-green-800',
-      salary: '$42,000 - $52,000',
-      jobType: 'Full-time',
-      applicationProgress: 100,
-      nextStep: 'Review and respond to offer',
-      offerDeadline: '2024-02-05',
-      startDate: '2024-03-01',
-      contactPerson: 'Ms. Emily Carter',
-      contactEmail: 'emily.carter@riverside.edu',
-      notes: 'Offer includes benefits package. Response required by February 5th.'
-    },
-    {
-      id: 5,
-      jobTitle: 'Physical Education Teacher',
-      school: 'Lincoln Elementary',
-      location: 'Detroit, MI',
-      appliedDate: '2024-01-22',
-      status: 'Application Submitted',
-      statusColor: 'bg-gray-100 text-gray-800',
-      salary: '$38,000 - $48,000',
-      jobType: 'Full-time',
-      applicationProgress: 25,
-      nextStep: 'Wait for initial screening',
-      contactPerson: 'Coach Mike Thompson',
-      contactEmail: 'mike.thompson@lincoln.edu',
-      notes: 'New application. Expected response within 1-2 weeks.'
-    }
-  ];
+  const dispatch = useAppDispatch();
+  const { applications, stats, isLoading } = useAppSelector(state => state.applications);
+  const { toast } = useToast();
+
+  useEffect(() => {
+    dispatch(fetchApplications());
+  }, [dispatch]);
 
   const getStatusIcon = (status: string) => {
     switch (status) {
@@ -125,13 +52,97 @@ const MyApplications = () => {
     return 'bg-gray-500';
   };
 
-  const stats = {
-    total: applications.length,
-    pending: applications.filter(app => ['Application Submitted', 'Under Review'].includes(app.status)).length,
-    interviews: applications.filter(app => app.status === 'Interview Scheduled').length,
-    offers: applications.filter(app => app.status === 'Offer Extended').length,
-    rejected: applications.filter(app => app.status === 'Rejected').length
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'Offer Extended':
+        return 'bg-green-100 text-green-800';
+      case 'Interview Scheduled':
+        return 'bg-blue-100 text-blue-800';
+      case 'Under Review':
+        return 'bg-yellow-100 text-yellow-800';
+      case 'Rejected':
+        return 'bg-red-100 text-red-800';
+      default:
+        return 'bg-gray-100 text-gray-800';
+    }
   };
+
+  const handleWithdrawApplication = async (applicationId: string) => {
+    try {
+      await dispatch(withdrawApplication(applicationId)).unwrap();
+      toast({
+        title: "Application Withdrawn",
+        description: "Your application has been withdrawn successfully.",
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to withdraw application. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <div className="space-y-6">
+        <div>
+          <h2 className="text-2xl font-bold text-foreground mb-2">My Applications</h2>
+          <p className="text-muted-foreground">Track your job applications and manage your career progress</p>
+        </div>
+
+        {/* Stats Skeleton */}
+        <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+          {[1, 2, 3, 4, 5].map((i) => (
+            <Card key={i}>
+              <CardContent className="p-4 text-center">
+                <Skeleton className="h-8 w-12 mx-auto mb-2" />
+                <Skeleton className="h-4 w-20 mx-auto" />
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+
+        {/* Applications Skeleton */}
+        <div className="space-y-4">
+          {[1, 2, 3].map((i) => (
+            <Card key={i}>
+              <CardHeader>
+                <div className="flex justify-between items-start">
+                  <div className="space-y-2">
+                    <Skeleton className="h-6 w-48" />
+                    <Skeleton className="h-4 w-64" />
+                  </div>
+                  <Skeleton className="h-6 w-24" />
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <div className="flex justify-between">
+                      <Skeleton className="h-4 w-32" />
+                      <Skeleton className="h-4 w-12" />
+                    </div>
+                    <Skeleton className="h-2 w-full" />
+                  </div>
+                  <div className="grid grid-cols-3 gap-4">
+                    <Skeleton className="h-4 w-full" />
+                    <Skeleton className="h-4 w-full" />
+                    <Skeleton className="h-4 w-full" />
+                  </div>
+                  <div className="flex gap-2">
+                    <Skeleton className="h-8 w-24" />
+                    <Skeleton className="h-8 w-32" />
+                    <Skeleton className="h-8 w-28" />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -176,141 +187,169 @@ const MyApplications = () => {
 
       {/* Applications List */}
       <div className="space-y-4">
-        {applications.map((application) => (
-          <Card key={application.id} className="hover:shadow-lg transition-shadow">
-            <CardHeader>
-              <div className="flex justify-between items-start">
-                <div>
-                  <CardTitle className="text-xl mb-1">{application.jobTitle}</CardTitle>
-                  <CardDescription className="text-base flex items-center gap-4">
-                    <span className="flex items-center gap-1">
-                      <Building className="h-4 w-4" />
-                      {application.school}
-                    </span>
-                    <span className="flex items-center gap-1">
-                      <MapPin className="h-4 w-4" />
-                      {application.location}
-                    </span>
-                  </CardDescription>
-                </div>
-                <div className="flex items-center gap-2">
-                  {getStatusIcon(application.status)}
-                  <Badge className={application.statusColor}>
-                    {application.status}
-                  </Badge>
-                </div>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {/* Application Progress */}
-                <div className="space-y-2">
-                  <div className="flex justify-between items-center text-sm">
-                    <span>Application Progress</span>
-                    <span>{application.applicationProgress}%</span>
-                  </div>
-                  <div className="w-full bg-muted rounded-full h-2">
-                    <div 
-                      className={`h-2 rounded-full ${getProgressColor(application.applicationProgress)}`}
-                      style={{ width: `${application.applicationProgress}%` }}
-                    ></div>
-                  </div>
-                  <p className="text-xs text-muted-foreground">Next step: {application.nextStep}</p>
-                </div>
-
-                {/* Job Details */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
-                  <div>
-                    <span className="font-medium">Salary: </span>
-                    <span className="text-foreground">{application.salary}</span>
-                  </div>
-                  <div>
-                    <span className="font-medium">Type: </span>
-                    <Badge variant="outline">{application.jobType}</Badge>
-                  </div>
-                  <div>
-                    <span className="font-medium">Applied: </span>
-                    <span className="text-muted-foreground">
-                      {new Date(application.appliedDate).toLocaleDateString()}
-                    </span>
-                  </div>
-                </div>
-
-                {/* Special Information */}
-                {application.status === 'Interview Scheduled' && (
-                  <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
-                    <h4 className="font-medium text-blue-900 mb-2 flex items-center gap-2">
-                      <Calendar className="h-4 w-4" />
-                      Interview Details
-                    </h4>
-                    <div className="text-sm text-blue-800 space-y-1">
-                      <p><strong>Date:</strong> {new Date(application.interviewDate!).toLocaleDateString()}</p>
-                      <p><strong>Time:</strong> {application.interviewTime}</p>
-                      <p><strong>Contact:</strong> {application.contactPerson} ({application.contactEmail})</p>
-                    </div>
-                  </div>
-                )}
-
-                {application.status === 'Offer Extended' && (
-                  <div className="bg-green-50 p-4 rounded-lg border border-green-200">
-                    <h4 className="font-medium text-green-900 mb-2 flex items-center gap-2">
-                      <CheckCircle className="h-4 w-4" />
-                      Job Offer Details
-                    </h4>
-                    <div className="text-sm text-green-800 space-y-1">
-                      <p><strong>Start Date:</strong> {new Date(application.startDate!).toLocaleDateString()}</p>
-                      <p><strong>Response Deadline:</strong> {new Date(application.offerDeadline!).toLocaleDateString()}</p>
-                      <p><strong>Contact:</strong> {application.contactPerson} ({application.contactEmail})</p>
-                    </div>
-                  </div>
-                )}
-
-                {application.status === 'Rejected' && (
-                  <div className="bg-red-50 p-4 rounded-lg border border-red-200">
-                    <h4 className="font-medium text-red-900 mb-2 flex items-center gap-2">
-                      <XCircle className="h-4 w-4" />
-                      Application Status
-                    </h4>
-                    <div className="text-sm text-red-800">
-                      <p><strong>Reason:</strong> {application.rejectionReason}</p>
-                    </div>
-                  </div>
-                )}
-
-                {/* Notes */}
-                {application.notes && (
-                  <div className="bg-muted/30 p-3 rounded-lg">
-                    <h5 className="font-medium text-sm mb-1">Notes:</h5>
-                    <p className="text-sm text-muted-foreground">{application.notes}</p>
-                  </div>
-                )}
-
-                {/* Actions */}
-                <div className="flex gap-2 pt-2">
-                  <Button variant="outline" size="sm" className="flex items-center gap-2">
-                    <Eye className="h-4 w-4" />
-                    View Details
-                  </Button>
-                  <Button variant="outline" size="sm" className="flex items-center gap-2">
-                    <Download className="h-4 w-4" />
-                    Download Application
-                  </Button>
-                  {application.status !== 'Rejected' && (
-                    <Button variant="outline" size="sm" className="flex items-center gap-2">
-                      <MessageSquare className="h-4 w-4" />
-                      Contact Employer
-                    </Button>
-                  )}
-                  {application.status === 'Offer Extended' && (
-                    <Button size="sm" className="bg-green-600 hover:bg-green-700">
-                      Respond to Offer
-                    </Button>
-                  )}
-                </div>
-              </div>
+        {applications.length === 0 ? (
+          <Card>
+            <CardContent className="p-6 text-center">
+              <FileText className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+              <h3 className="text-lg font-semibold mb-2">No applications yet</h3>
+              <p className="text-muted-foreground">Start applying to jobs to track your progress here.</p>
             </CardContent>
           </Card>
-        ))}
+        ) : (
+          applications.map((application) => (
+            <Card key={application.id} className="hover:shadow-lg transition-shadow">
+              <CardHeader>
+                <div className="flex justify-between items-start">
+                  <div>
+                    <CardTitle className="text-xl mb-1">{application.jobTitle}</CardTitle>
+                    <CardDescription className="text-base flex items-center gap-4">
+                      <span className="flex items-center gap-1">
+                        <Building className="h-4 w-4" />
+                        {application.school}
+                      </span>
+                      <span className="flex items-center gap-1">
+                        <MapPin className="h-4 w-4" />
+                        {application.location}
+                      </span>
+                    </CardDescription>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    {getStatusIcon(application.status)}
+                    <Badge className={getStatusColor(application.status)}>
+                      {application.status}
+                    </Badge>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  {/* Application Progress */}
+                  <div className="space-y-2">
+                    <div className="flex justify-between items-center text-sm">
+                      <span>Application Progress</span>
+                      <span>
+                        {application.status === 'Offer Extended' ? '100' : 
+                         application.status === 'Interview Scheduled' ? '75' :
+                         application.status === 'Under Review' ? '50' :
+                         application.status === 'Rejected' ? '25' : '25'}%
+                      </span>
+                    </div>
+                    <div className="w-full bg-muted rounded-full h-2">
+                      <div 
+                        className={`h-2 rounded-full ${getProgressColor(
+                          application.status === 'Offer Extended' ? 100 : 
+                          application.status === 'Interview Scheduled' ? 75 :
+                          application.status === 'Under Review' ? 50 : 25
+                        )}`}
+                        style={{ 
+                          width: `${
+                            application.status === 'Offer Extended' ? 100 : 
+                            application.status === 'Interview Scheduled' ? 75 :
+                            application.status === 'Under Review' ? 50 : 25
+                          }%` 
+                        }}
+                      ></div>
+                    </div>
+                  </div>
+
+                  {/* Job Details */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                    <div>
+                      <span className="font-medium">Applied: </span>
+                      <span className="text-muted-foreground">
+                        {new Date(application.appliedDate).toLocaleDateString()}
+                      </span>
+                    </div>
+                    <div>
+                      <span className="font-medium">Documents: </span>
+                      <span className="text-muted-foreground">{application.documents.length} files</span>
+                    </div>
+                  </div>
+
+                  {/* Special Information */}
+                  {application.status === 'Interview Scheduled' && application.interviewDate && (
+                    <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
+                      <h4 className="font-medium text-blue-900 mb-2 flex items-center gap-2">
+                        <Calendar className="h-4 w-4" />
+                        Interview Details
+                      </h4>
+                      <div className="text-sm text-blue-800 space-y-1">
+                        <p><strong>Date:</strong> {new Date(application.interviewDate).toLocaleDateString()}</p>
+                        {application.interviewTime && (
+                          <p><strong>Time:</strong> {application.interviewTime}</p>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
+                  {application.status === 'Offer Extended' && (
+                    <div className="bg-green-50 p-4 rounded-lg border border-green-200">
+                      <h4 className="font-medium text-green-900 mb-2 flex items-center gap-2">
+                        <CheckCircle className="h-4 w-4" />
+                        Job Offer Extended
+                      </h4>
+                      <div className="text-sm text-green-800">
+                        <p>Congratulations! You have received a job offer.</p>
+                      </div>
+                    </div>
+                  )}
+
+                  {application.status === 'Rejected' && (
+                    <div className="bg-red-50 p-4 rounded-lg border border-red-200">
+                      <h4 className="font-medium text-red-900 mb-2 flex items-center gap-2">
+                        <XCircle className="h-4 w-4" />
+                        Application Status
+                      </h4>
+                      <div className="text-sm text-red-800">
+                        <p>Unfortunately, your application was not successful this time.</p>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Notes */}
+                  {application.notes && (
+                    <div className="bg-muted/30 p-3 rounded-lg">
+                      <h5 className="font-medium text-sm mb-1">Notes:</h5>
+                      <p className="text-sm text-muted-foreground">{application.notes}</p>
+                    </div>
+                  )}
+
+                  {/* Actions */}
+                  <div className="flex gap-2 pt-2">
+                    <Button variant="outline" size="sm" className="flex items-center gap-2">
+                      <Eye className="h-4 w-4" />
+                      View Details
+                    </Button>
+                    <Button variant="outline" size="sm" className="flex items-center gap-2">
+                      <Download className="h-4 w-4" />
+                      Download Application
+                    </Button>
+                    {application.status !== 'Rejected' && application.status !== 'Offer Extended' && (
+                      <>
+                        <Button variant="outline" size="sm" className="flex items-center gap-2">
+                          <MessageSquare className="h-4 w-4" />
+                          Contact Employer
+                        </Button>
+                        <Button 
+                          variant="destructive" 
+                          size="sm"
+                          onClick={() => handleWithdrawApplication(application.id)}
+                        >
+                          Withdraw
+                        </Button>
+                      </>
+                    )}
+                    {application.status === 'Offer Extended' && (
+                      <Button size="sm" className="bg-green-600 hover:bg-green-700">
+                        Respond to Offer
+                      </Button>
+                    )}
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          ))
+        )}
       </div>
     </div>
   );
